@@ -1,0 +1,13 @@
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    overflow: hidden;
+    background: #8c8e93;
+    color: var(--tao-color-text, #e5e7eb);
+    font-family: var(--tao-font-family, system-ui, sans-serif);
+}
