@@ -1,5 +1,6 @@
 import { Group, Mesh, Vector3 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { clamp } from '../anim/ease';
 import { tuning } from '../tuning';
 import { BEVEL, DieMaterials } from './materials';
 
@@ -15,25 +16,25 @@ import type { DiePose } from './throwPlan';
 
 const AXIS_X = new Vector3(1, 0, 0);
 
+/** Больше призрачных копий не бывает. */
+export const MAX_GHOSTS = 4;
+
 /**
- * Кубик на сцене. Устроен в три слоя, чтобы мультяшная деформация шла «по миру», а не по граням куба:
+ * Одно тело кубика. Устроено в три слоя, чтобы мультяшная деформация шла «по миру», а не по граням куба:
  *   object   — место в мире;
  *   deformer — выравнен по оси растяжения (вдоль полёта или вверх) и растягивается вдоль неё;
  *   cube     — настоящий поворот куба, из которого убран поворот deformer'а.
  * Итог: куб крутится как хочет, а вытягивается и сплющивается строго вдоль движения.
  */
-export class DieView {
+class DieBody {
     readonly object = new Group();
     private readonly deformer = new Group();
     private readonly cube = new Group();
-    private readonly materials = new DieMaterials();
-    private readonly twistAxis = new Vector3();
-    private readonly geometry = new RoundedBoxGeometry(1, 1, 1, 5, BEVEL);
+    private readonly materials: DieMaterials;
 
-    constructor() {
-        const hull = new Mesh(this.geometry, this.materials.outline);
-        const body = new Mesh(this.geometry, this.materials.face);
-        this.cube.add(hull, body);
+    constructor(geometry: RoundedBoxGeometry, ghost: boolean) {
+        this.materials = new DieMaterials(ghost);
+        this.cube.add(new Mesh(geometry, this.materials.outline), new Mesh(geometry, this.materials.face));
         this.deformer.add(this.cube);
         this.object.add(this.deformer);
     }
@@ -46,6 +47,47 @@ export class DieView {
         this.deformer.scale.set(pose.stretch, across, across);
         this.cube.quaternion.copy(this.deformer.quaternion).invert().multiply(pose.quat);
         this.materials.setDeform(pose.pos, pose.axis, pose.bendDir, pose.bend, pose.spin);
+    }
+
+    setAlpha(alpha: number): void {
+        this.materials.setAlpha(alpha);
+        this.object.visible = alpha > 0.01;
+    }
+
+    updateLook(): void {
+        this.materials.update();
+    }
+
+    dispose(): void {
+        this.materials.dispose();
+    }
+}
+
+/** Кубик на сцене: само тело и призрачные копии для смаза на быстром вращении. */
+export class DieView {
+    readonly root = new Group();
+    private readonly geometry = new RoundedBoxGeometry(1, 1, 1, 5, BEVEL);
+    private readonly main = new DieBody(this.geometry, false);
+    private readonly ghosts = Array.from({ length: MAX_GHOSTS }, () => new DieBody(this.geometry, true));
+    private readonly twistAxis = new Vector3();
+
+    constructor() {
+        for (const ghost of this.ghosts) {
+            ghost.setAlpha(0);
+            this.root.add(ghost.object);
+        }
+        this.root.add(this.main.object);
+    }
+
+    apply(pose: DiePose): void {
+        this.main.apply(pose);
+    }
+
+    /** Призрак i в позе pose с прозрачностью alpha; alpha 0 прячет его. */
+    applyGhost(i: number, pose: DiePose, alpha: number): void {
+        const ghost = this.ghosts[i]!;
+        ghost.setAlpha(clamp(alpha, 0, 1));
+        if (alpha > 0.01) ghost.apply(pose);
     }
 
     /**
@@ -66,11 +108,13 @@ export class DieView {
     }
 
     updateLook(): void {
-        this.materials.update();
+        this.main.updateLook();
+        for (const ghost of this.ghosts) ghost.updateLook();
     }
 
     dispose(): void {
         this.geometry.dispose();
-        this.materials.dispose();
+        this.main.dispose();
+        for (const ghost of this.ghosts) ghost.dispose();
     }
 }

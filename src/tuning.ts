@@ -102,6 +102,12 @@ const base = {
     edgeLineAlpha: 1,
     /** Прозрачность линий от углов: 1 — непрозрачные, меньше — бледнее. */
     cornerLineAlpha: 1,
+    /** Призрачные копии кубика (смаз) на быстром вращении, штук (до 4): кубик в прошлых позах, всё бледнее. 0 — без смаза. */
+    ghostCount: 0,
+    /** Через сколько секунд друг от друга призраки: чем больше, тем длиннее смаз. */
+    ghostStep: 0.025,
+    /** Яркость самого близкого призрака (0…1); дальние бледнее. */
+    ghostAlpha: 0.3,
     /** Мягкость выбора задних точек (0…1): чем больше, тем дольше линия точки держится, когда та ушла вперёд, и тем цельнее линии. */
     rearSoftness: 0.12,
     /**
@@ -207,6 +213,8 @@ export const STYLE_DEFAULTS: Record<StyleName, Readonly<typeof base>> = {
         cornerRear: 1,
         edgeLineAlpha: 0.09,
         cornerLineAlpha: 0.15,
+        ghostCount: 3,
+        ghostAlpha: 0,
         rearSoftness: 0.2,
         turnGain: 1,
         burstSize: 0,
@@ -299,6 +307,9 @@ export const TUNING_GROUPS: { title: string; knobs: TuningKnob[] }[] = [
             { key: 'edgeStraight', label: 'Прямота линий рёбер', min: 0, max: 1, step: 0.01, only: ['spin'] },
             { key: 'cornerRear', label: 'Углы только задние', min: 0, max: 1, step: 1, only: ['spin'] },
             { key: 'cornerLineAlpha', label: 'Прозрачность линий углов', min: 0, max: 1, step: 0.01, only: ['spin'] },
+            { key: 'ghostCount', label: 'Призраков (смаз)', min: 0, max: 4, step: 1, only: ['spin'] },
+            { key: 'ghostStep', label: 'Шаг между призраками', min: 0.008, max: 0.08, step: 0.001, unit: 'с', only: ['spin'] },
+            { key: 'ghostAlpha', label: 'Яркость призраков', min: 0, max: 0.8, step: 0.01, only: ['spin'] },
             { key: 'edgeLineAlpha', label: 'Прозрачность линий рёбер', min: 0, max: 1, step: 0.01, only: ['spin'] },
             { key: 'rearSoftness', label: 'Мягкость задних точек', min: 0.02, max: 1, step: 0.01, only: ['spin'] },
             { key: 'turnGain', label: 'Усиление от поворота пути', min: 0, max: 3, step: 0.05, only: ['spin'] },

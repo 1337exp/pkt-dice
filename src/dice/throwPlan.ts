@@ -47,6 +47,17 @@ export const createPose = (): DiePose => ({
     spin: new Vector3(),
 });
 
+export function copyPose(from: DiePose, to: DiePose): void {
+    to.pos.copy(from.pos);
+    to.quat.copy(from.quat);
+    to.axis.copy(from.axis);
+    to.stretch = from.stretch;
+    to.airborne = from.airborne;
+    to.bend = from.bend;
+    to.bendDir.copy(from.bendDir);
+    to.spin.copy(from.spin);
+}
+
 /** Где кубик лежит: центр и поворот на грани. */
 export interface DieRest {
     pos: Vector3;

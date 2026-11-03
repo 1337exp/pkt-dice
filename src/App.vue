@@ -8,13 +8,13 @@ const STYLE_KEY = 'pkt-dice:style';
 
 const host = ref<HTMLElement>();
 const tuningOpen = ref(false);
-const look = ref<StyleName>('toon');
+const look = ref<StyleName>('spin');
 
 try {
     const saved = localStorage.getItem(STYLE_KEY);
     if (STYLES.some((s) => s.name === saved)) look.value = saved as StyleName;
 } catch {
-    // Хранилище недоступно — остаёмся на мультяшном.
+    // Хранилище недоступно — остаёмся на «Вертушке».
 }
 watch(look, (value) => {
     try {

@@ -89,6 +89,7 @@ uniform vec3 uInk;
 uniform vec3 uLight;
 uniform float uEdge;
 uniform float uPip;
+uniform float uAlpha;
 
 varying vec3 vLocal;
 varying vec3 vNormal;
@@ -140,7 +141,7 @@ void main() {
     float band = step(0.1, ndl) * 0.5 + step(0.5, ndl) * 0.5;
     vec3 face = mix(uShadow, uPaper, band);
 
-    gl_FragColor = vec4(mix(face, uInk, ink), 1.0);
+    gl_FragColor = vec4(mix(face, uInk, ink), uAlpha);
     #include <colorspace_fragment>
 }
 `;
@@ -166,9 +167,10 @@ void main() {
 
 const OUTLINE_FRAG = /* glsl */ `
 uniform vec3 uInk;
+uniform float uAlpha;
 
 void main() {
-    gl_FragColor = vec4(uInk, 1.0);
+    gl_FragColor = vec4(uInk, uAlpha);
     #include <colorspace_fragment>
 }
 `;
@@ -192,8 +194,10 @@ export class DieMaterials {
         uTwist: { value: 0 },
     };
 
-    constructor() {
+    /** ghost — призрачная копия: полупрозрачная, прозрачность задаётся setAlpha. */
+    constructor(ghost = false) {
         this.face = new ShaderMaterial({
+            transparent: ghost,
             vertexShader: DIE_VERT,
             fragmentShader: DIE_FRAG,
             uniforms: {
@@ -204,18 +208,27 @@ export class DieMaterials {
                 uLight: { value: new Vector3(-0.35, 0.75, 0.55).normalize() },
                 uEdge: { value: tuning.edge },
                 uPip: { value: tuning.pipSize },
+                uAlpha: { value: 1 },
             },
         });
         this.outline = new ShaderMaterial({
             vertexShader: OUTLINE_VERT,
             fragmentShader: OUTLINE_FRAG,
             side: BackSide,
+            transparent: ghost,
+            depthWrite: !ghost,
             uniforms: {
                 ...this.bend,
                 uInk: { value: new Color(INK) },
                 uWidth: { value: tuning.outline },
+                uAlpha: { value: 1 },
             },
         });
+    }
+
+    setAlpha(alpha: number): void {
+        this.face.uniforms.uAlpha!.value = alpha;
+        this.outline.uniforms.uAlpha!.value = alpha;
     }
 
     /** Центр, ось и направление изгиба, кривизна; угловая скорость — для закрутки. */

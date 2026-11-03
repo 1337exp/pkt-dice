@@ -1,11 +1,12 @@
 import { Color, MathUtils, PerspectiveCamera, Plane, Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from 'three';
+import { smoothstep } from '../anim/ease';
 import { Ticker } from '../anim/ticker';
 import { tuning } from '../tuning';
-import { ANCHOR_COUNT, DieView } from './DieView';
+import { ANCHOR_COUNT, DieView, MAX_GHOSTS } from './DieView';
 import { orientationWithTop } from './faces';
 import { SpinTrail, FloorShadow, ImpactFx, SwirlTrail } from './fx';
 import { createBlobTexture } from './textures';
-import { createPose, HALF, planThrow, type DieRest, type Impact, type ThrowPlan } from './throwPlan';
+import { copyPose, createPose, HALF, planThrow, type DieRest, type Impact, type ThrowPlan } from './throwPlan';
 
 export interface StageEvents {
     /** Бросок начался. */
@@ -44,6 +45,10 @@ export class DiceStage {
     private readonly trail = new SwirlTrail();
     private readonly spinTrail = new SpinTrail();
     private readonly anchors = Array.from({ length: ANCHOR_COUNT }, () => new Vector3());
+    /** Кольцо последних поз кубика: по нему призраки показывают, где он был чуть раньше. */
+    private readonly history = Array.from({ length: 64 }, () => ({ t: 0, pose: createPose() }));
+    private historyHead = 0;
+    private historyCount = 0;
     private readonly fx: ImpactFx;
     private readonly pose = createPose();
     private readonly prevPos = new Vector3();
@@ -76,7 +81,7 @@ export class DiceStage {
         this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
 
         this.camera = new PerspectiveCamera(tuning.camFov, 1, 0.1, 80);
-        this.scene.add(this.camera, this.die.object, this.shadow.mesh, this.trail.object, this.spinTrail.object);
+        this.scene.add(this.camera, this.die.root, this.shadow.mesh, this.trail.object, this.spinTrail.object);
         this.fx = new ImpactFx(this.scene, this.ticker, this.camera);
 
         this.pose.pos.copy(this.rest.pos);
@@ -114,6 +119,7 @@ export class DiceStage {
         this.planTime = 0;
         this.nextImpact = 0;
         this.spinTrail.reseed();
+        this.historyCount = 0;
         this.events.onThrow?.();
         return true;
     }
@@ -150,6 +156,7 @@ export class DiceStage {
         this.hold = Math.max(0, this.hold - realDt);
 
         if (this.plan) this.advance(dt);
+        this.updateGhosts();
 
         this.die.updateLook();
         this.trail.update(dt, this.camera);
@@ -168,11 +175,43 @@ export class DiceStage {
         this.renderer.render(this.scene, this.camera);
     }
 
+    private record(): void {
+        const entry = this.history[this.historyHead]!;
+        entry.t = this.planTime;
+        copyPose(this.pose, entry.pose);
+        this.historyHead = (this.historyHead + 1) % this.history.length;
+        this.historyCount = Math.min(this.historyCount + 1, this.history.length);
+    }
+
+    /** Поза кубика в момент time (последняя запись не позже него) или null, если записей ещё нет. */
+    private poseAt(time: number) {
+        for (let k = 0; k < this.historyCount; k++) {
+            const entry = this.history[(this.historyHead - 1 - k + this.history.length) % this.history.length]!;
+            if (entry.t <= time) return entry.pose;
+        }
+        return null;
+    }
+
+    /**
+     * Призрачные копии (смаз): кубик в прошлых позах, всё бледнее. Видны только пока он быстро крутится,
+     * поэтому на замедлении перед ударом пропадают сами.
+     */
+    private updateGhosts(): void {
+        const count = Math.round(MathUtils.clamp(tuning.ghostCount, 0, MAX_GHOSTS));
+        const power = this.plan ? smoothstep(6, 26, this.pose.spin.length()) : 0;
+        for (let i = 0; i < MAX_GHOSTS; i++) {
+            const pose = i < count && power > 0 ? this.poseAt(this.planTime - (i + 1) * tuning.ghostStep) : null;
+            if (pose) this.die.applyGhost(i, pose, tuning.ghostAlpha * (1 - i / count) * power);
+            else this.die.applyGhost(i, this.pose, 0);
+        }
+    }
+
     private advance(dt: number): void {
         const plan = this.plan!;
         this.planTime += dt;
         plan.sample(this.planTime, this.pose);
         this.die.apply(this.pose);
+        if (dt > 0) this.record();
 
         while (this.nextImpact < plan.impacts.length && plan.impacts[this.nextImpact]!.time <= this.planTime) {
             this.impact(plan.impacts[this.nextImpact]!);
