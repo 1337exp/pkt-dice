@@ -1,5 +1,6 @@
 import {
     Group,
+    MathUtils,
     Mesh,
     MeshBasicMaterial,
     type Object3D,
@@ -11,12 +12,14 @@ import {
     Vector3,
     type Texture,
 } from 'three';
-import { clamp, easeOutBack, easeOutCubic, lerp, linear, smoothstep } from '../anim/ease';
-import type { Ticker } from '../anim/ticker';
+import { easeOutBack, easeOutCubic, linear, smoothstep } from 'pkt-threejs-blueprint/ease';
+import type { Ticker } from 'pkt-threejs-blueprint/ticker';
 import { tuning } from '../tuning';
 import { MAX_SAMPLES, Ribbon } from './ribbon';
 import { V_REF } from './throwPlan';
 import { createBurstTexture, createPuffTexture, createRingTexture } from './textures';
+
+const { clamp, lerp } = MathUtils;
 
 const UP = new Vector3(0, 1, 0);
 const AXIS_X = new Vector3(1, 0, 0);

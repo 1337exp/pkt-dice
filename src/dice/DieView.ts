@@ -1,8 +1,9 @@
-import { Group, Mesh, Vector3 } from 'three';
+import { Group, MathUtils, Mesh, Vector3 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { clamp } from '../anim/ease';
 import { tuning } from '../tuning';
 import { BEVEL, DieMaterials } from './materials';
+
+const { clamp } = MathUtils;
 
 /** Опорные точки в осях куба: 8 углов (по x, y, z от меньшего к большему), потом 12 середин рёбер. */
 const ANCHORS: Vector3[] = [];

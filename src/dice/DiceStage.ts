@@ -1,6 +1,9 @@
-import { Color, MathUtils, PerspectiveCamera, Plane, Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from 'three';
-import { smoothstep } from '../anim/ease';
-import { Ticker } from '../anim/ticker';
+import { Color, MathUtils, PerspectiveCamera, Plane, Scene, SRGBColorSpace, Vector2, Vector3, type WebGLRenderer } from 'three';
+import { smoothstep } from 'pkt-threejs-blueprint/ease';
+import { startLoop, type Loop } from 'pkt-threejs-blueprint/loop';
+import { clientToNdc, rayOnPlane } from 'pkt-threejs-blueprint/pointer';
+import { bindResize, createRenderer } from 'pkt-threejs-blueprint/renderer';
+import { Ticker } from 'pkt-threejs-blueprint/ticker';
 import { tuning } from '../tuning';
 import { ANCHOR_COUNT, DieView, MAX_GHOSTS } from './DieView';
 import { orientationWithTop } from './faces';
@@ -52,8 +55,8 @@ export class DiceStage {
     private readonly fx: ImpactFx;
     private readonly pose = createPose();
     private readonly prevPos = new Vector3();
-    private readonly raycaster = new Raycaster();
-    private readonly observer: ResizeObserver;
+    private readonly loop: Loop;
+    private readonly stopResize: () => void;
     private rest: DieRest = { pos: new Vector3(0, HALF, 0), quat: orientationWithTop(1) };
     private plan: ThrowPlan | null = null;
     private planTime = 0;
@@ -62,22 +65,15 @@ export class DiceStage {
     private hold = 0;
     private shake = 0;
     private fov = 0;
-    private frame = 0;
-    private last = 0;
     private readonly onPointerDown = (e: PointerEvent) => {
-        const rect = this.renderer.domElement.getBoundingClientRect();
-        this.throwDie({ ndc: { x: ((e.clientX - rect.left) / rect.width) * 2 - 1, y: -(((e.clientY - rect.top) / rect.height) * 2 - 1) } });
+        this.throwDie({ ndc: clientToNdc(e, this.renderer.domElement) });
     };
 
     constructor(
-        private readonly container: HTMLElement,
+        container: HTMLElement,
         private readonly events: StageEvents = {},
     ) {
-        this.renderer = new WebGLRenderer({ antialias: true });
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.domElement.style.display = 'block';
-        this.renderer.domElement.style.touchAction = 'none';
-        container.appendChild(this.renderer.domElement);
+        this.renderer = createRenderer(container);
         this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
 
         this.camera = new PerspectiveCamera(tuning.camFov, 1, 0.1, 80);
@@ -89,17 +85,9 @@ export class DiceStage {
         this.die.apply(this.pose);
         this.prevPos.copy(this.pose.pos);
 
-        this.observer = new ResizeObserver(() => this.resize());
-        this.observer.observe(container);
-        this.resize();
-
-        this.last = performance.now();
-        const loop = (now: number) => {
-            this.frame = requestAnimationFrame(loop);
-            this.update(Math.min(1 / 30, (now - this.last) / 1000));
-            this.last = now;
-        };
-        this.frame = requestAnimationFrame(loop);
+        this.stopResize = bindResize(this.renderer, container, (w, h) => this.resize(w, h));
+        // Потолок кадра 1/30: после фона вкладки бросок не прыгает в конец.
+        this.loop = startLoop((dt) => this.update(dt), { maxDt: 1 / 30 });
     }
 
     get rolling(): boolean {
@@ -133,8 +121,7 @@ export class DiceStage {
     private floorPoint(ndc: { x: number; y: number }): Vector3 {
         const clamped = new Vector2(MathUtils.clamp(ndc.x, -NDC_LIMITS.x, NDC_LIMITS.x), MathUtils.clamp(ndc.y, NDC_LIMITS.yMin, NDC_LIMITS.yMax));
         this.updateCamera();
-        this.raycaster.setFromCamera(clamped, this.camera);
-        return this.raycaster.ray.intersectPlane(FLOOR, new Vector3()) ?? new Vector3();
+        return rayOnPlane(clamped, this.camera, FLOOR) ?? new Vector3();
     }
 
     private impact(impact: Impact): void {
@@ -244,18 +231,14 @@ export class DiceStage {
         this.camera.lookAt(LOOK_AT);
     }
 
-    private resize(): void {
-        const w = this.container.clientWidth;
-        const h = this.container.clientHeight;
-        if (!w || !h) return;
-        this.renderer.setSize(w, h);
+    private resize(w: number, h: number): void {
         this.camera.aspect = w / h;
         this.camera.updateProjectionMatrix();
     }
 
     dispose(): void {
-        cancelAnimationFrame(this.frame);
-        this.observer.disconnect();
+        this.loop.stop();
+        this.stopResize();
         this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
         this.die.dispose();
         this.shadow.dispose();

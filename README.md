@@ -10,7 +10,8 @@ A starter kit for a cartoon dice throw on three.js: a cube that looks hand-drawn
 squash and stretch, trails behind the corners, comic impact effects, and a live tuning panel in Vue + TaoUI.
 It is not a framework but a base to copy and reshape for your own game. [Watch the demo](docs/media/demo.mp4) (20 s, no sound).
 
-**Stack:** three.js + Vue 3 + TypeScript + Vite, [TaoUI](https://www.npmjs.com/package/@1337exp/taoui).
+**Stack:** three.js + Vue 3 + TypeScript + Vite, [TaoUI](https://www.npmjs.com/package/@1337exp/taoui), and our shared `pkt-threejs-blueprint` (game clock, easing, renderer, pointer).
+The latter is not published yet: it is linked from the sibling folder (`file:../pkt-threejs-blueprint`), so build it once there (`npm install && npm run build`) before `npm install` here.
 
 ```bash
 npm install
@@ -59,7 +60,6 @@ The nuances (why it is built this way, and the traps found on the way) are in [d
 
 ```
 src/
-  anim/      ease curves, Ticker (game time: tweens and waits)
   dice/
     throwPlan.ts   the storyboard: phases, path, rotation, deformation, impacts
     DiceStage.ts   renderer, camera, playback of a plan, pose history, effects

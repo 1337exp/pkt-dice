@@ -1,7 +1,9 @@
-import { Matrix4, Quaternion, Vector3 } from 'three';
-import { clamp, easeInOutCubic, easeOutCubic, lerp, smoothstep } from '../anim/ease';
+import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
+import { easeInOutCubic, easeOutCubic, smoothstep } from 'pkt-threejs-blueprint/ease';
 import { tuning } from '../tuning';
 import { faceNormal, orientationWithTop } from './faces';
+
+const { clamp, lerp } = MathUtils;
 
 const UP = new Vector3(0, 1, 0);
 const AXES = [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)];
