@@ -1,4 +1,4 @@
-import { createTuning } from 'pkt-threejs-blueprint/tuning';
+import { createTuning } from '@1337exp/pkt-threejs-blueprint/tuning';
 
 /**
  * Все ручки анимации в одном месте. Это обычный объект: сцена читает его каждый кадр,

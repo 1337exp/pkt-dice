@@ -1,5 +1,5 @@
 import { MathUtils, Matrix4, Quaternion, Vector3 } from 'three';
-import { easeInOutCubic, easeOutCubic, smoothstep } from 'pkt-threejs-blueprint/ease';
+import { easeInOutCubic, easeOutCubic, smoothstep } from '@1337exp/pkt-threejs-blueprint/ease';
 import { tuning } from '../tuning';
 import { faceNormal, orientationWithTop } from './faces';
 

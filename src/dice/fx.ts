@@ -12,8 +12,8 @@ import {
     Vector3,
     type Texture,
 } from 'three';
-import { easeOutBack, easeOutCubic, linear, smoothstep } from 'pkt-threejs-blueprint/ease';
-import type { Ticker } from 'pkt-threejs-blueprint/ticker';
+import { easeOutBack, easeOutCubic, linear, smoothstep } from '@1337exp/pkt-threejs-blueprint/ease';
+import type { Ticker } from '@1337exp/pkt-threejs-blueprint/ticker';
 import { tuning } from '../tuning';
 import { MAX_SAMPLES, Ribbon } from './ribbon';
 import { V_REF } from './throwPlan';

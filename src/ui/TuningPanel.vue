@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { shallowRef, watch } from 'vue';
-import { TuningPanel as TuningSliders } from 'pkt-threejs-blueprint/vue/tuning-panel';
+import { TuningPanel as TuningSliders } from '@1337exp/pkt-threejs-blueprint/vue/tuning-panel';
 import { createStyleTuning, type StyleName } from '../tuning';
 
 /**

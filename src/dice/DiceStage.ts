@@ -1,9 +1,9 @@
 import { Color, MathUtils, PerspectiveCamera, Plane, Scene, SRGBColorSpace, Vector2, Vector3, type WebGLRenderer } from 'three';
-import { smoothstep } from 'pkt-threejs-blueprint/ease';
-import { startLoop, type Loop } from 'pkt-threejs-blueprint/loop';
-import { clientToNdc, rayOnPlane } from 'pkt-threejs-blueprint/pointer';
-import { bindResize, createRenderer } from 'pkt-threejs-blueprint/renderer';
-import { Ticker } from 'pkt-threejs-blueprint/ticker';
+import { smoothstep } from '@1337exp/pkt-threejs-blueprint/ease';
+import { startLoop, type Loop } from '@1337exp/pkt-threejs-blueprint/loop';
+import { clientToNdc, rayOnPlane } from '@1337exp/pkt-threejs-blueprint/pointer';
+import { bindResize, createRenderer } from '@1337exp/pkt-threejs-blueprint/renderer';
+import { Ticker } from '@1337exp/pkt-threejs-blueprint/ticker';
 import { tuning } from '../tuning';
 import { ANCHOR_COUNT, DieView, MAX_GHOSTS } from './DieView';
 import { orientationWithTop } from './faces';
