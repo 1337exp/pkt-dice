@@ -11,8 +11,6 @@
 Это не фреймворк, а основа, которую копируют и переделывают под свою игру. [Посмотреть демо](docs/media/demo.mp4) (20 с, без звука).
 
 **Стек:** three.js + Vue 3 + TypeScript + Vite, [TaoUI](https://www.npmjs.com/package/@1337exp/taoui) и наша общая `@1337exp/pkt-threejs-blueprint` (игровое время, кривые, рендерер, указатель).
-Она пока не опубликована: подключена из соседней папки (`file:../pkt-threejs-blueprint`), поэтому сначала соберите её там (`npm install && npm run build`), потом `npm install` здесь.
-
 ```bash
 npm install
 npm run dev         # демо: кубик на сером фоне

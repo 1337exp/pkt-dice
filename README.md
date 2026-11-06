@@ -11,8 +11,6 @@ squash and stretch, trails behind the corners, comic impact effects, and a live 
 It is not a framework but a base to copy and reshape for your own game. [Watch the demo](docs/media/demo.mp4) (20 s, no sound).
 
 **Stack:** three.js + Vue 3 + TypeScript + Vite, [TaoUI](https://www.npmjs.com/package/@1337exp/taoui), and our shared `@1337exp/pkt-threejs-blueprint` (game clock, easing, renderer, pointer).
-The latter is not published yet: it is linked from the sibling folder (`file:../pkt-threejs-blueprint`), so build it once there (`npm install && npm run build`) before `npm install` here.
-
 ```bash
 npm install
 npm run dev         # the demo: a die on a grey background
