@@ -1,3 +1,5 @@
+import { createTuning } from 'pkt-threejs-blueprint/tuning';
+
 /**
  * Все ручки анимации в одном месте. Это обычный объект: сцена читает его каждый кадр,
  * поэтому значения можно менять на лету (панель настроек в демо так и делает).
@@ -339,3 +341,18 @@ export const TUNING_GROUPS: { title: string; knobs: TuningKnob[] }[] = [
         ],
     },
 ];
+
+// Мультяшный стиль хранится под прежним ключом, чтобы не потерять уже подобранное.
+const storageKey = (style: StyleName) => (style === 'toon' ? 'pkt-dice:tuning' : `pkt-dice:tuning:${style}`);
+
+/**
+ * Хранилище настроек для стиля. Значения по умолчанию у каждого стиля свои, поэтому на каждый стиль своё хранилище:
+ * живой объект `tuning` сначала заливается умолчаниями стиля, и хранилище запоминает их как «умолчания» и поверх
+ * накладывает сохранённые правки этого стиля. В браузере хранится только то, что отличается от умолчаний стиля.
+ * Ручки, которых у стиля нет (`only`), в схему не попадают.
+ */
+export function createStyleTuning(style: StyleName) {
+    Object.assign(tuning, STYLE_DEFAULTS[style]);
+    const groups = TUNING_GROUPS.map((group) => ({ ...group, knobs: group.knobs.filter((knob) => !knob.only || knob.only.includes(style)) })).filter((group) => group.knobs.length);
+    return createTuning(tuning, { groups, storageKey: storageKey(style) });
+}
